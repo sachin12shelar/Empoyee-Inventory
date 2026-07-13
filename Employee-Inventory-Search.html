@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Employee Asset Search — New Master</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#ffffff; --accent:#2f5fdc; --accent-dark:#20418f;
+    --text:#1f2430; --muted:#6b7280; --border:#e3e7ee;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Segoe UI',Arial,sans-serif; background:var(--bg); color:var(--text);
+    min-height:100vh; padding:32px 16px;
+  }
+  .wrap{max-width:760px; margin:0 auto;}
+  h1{font-size:1.6rem; text-align:center; margin-bottom:4px;}
+  p.sub{text-align:center; color:var(--muted); margin-top:0; margin-bottom:24px; font-size:.95rem;}
+  .search-box{
+    display:flex; gap:8px; background:var(--card); padding:8px; border-radius:12px;
+    box-shadow:0 2px 10px rgba(20,30,60,0.07); border:1px solid var(--border);
+  }
+  .search-box input{
+    flex:1; border:none; outline:none; padding:12px 14px; font-size:1rem; border-radius:8px; background:transparent;
+  }
+  .search-box button{
+    background:var(--accent); color:#fff; border:none; padding:0 22px; border-radius:8px;
+    font-size:1rem; cursor:pointer; transition:background .15s;
+  }
+  .search-box button:hover{background:var(--accent-dark);}
+  #suggestions{position:relative;}
+  .sugg-list{
+    position:absolute; top:4px; left:0; right:0; background:var(--card); border:1px solid var(--border);
+    border-radius:10px; box-shadow:0 8px 20px rgba(20,30,60,0.12); max-height:240px; overflow-y:auto; z-index:10;
+  }
+  .sugg-item{padding:10px 16px; cursor:pointer; font-size:.95rem; border-bottom:1px solid var(--border);}
+  .sugg-item:last-child{border-bottom:none;}
+  .sugg-item:hover{background:#eef2ff;}
+  .sugg-item b{color:var(--accent-dark);}
+  #results{margin-top:26px;}
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:14px; padding:22px 26px;
+    box-shadow:0 2px 10px rgba(20,30,60,0.06);
+  }
+  .card h2{margin:0 0 2px 0; font-size:1.3rem;}
+  .emp-id{color:var(--muted); font-size:.9rem; margin-bottom:18px;}
+  .grid{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:520px){ .grid{grid-template-columns:1fr;} }
+  .item{background:#f8f9fc; border:1px solid var(--border); border-radius:10px; padding:12px 14px;}
+  .item .label{font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:4px;}
+  .item .value{font-size:1.05rem; font-weight:600;}
+  .value.empty{color:#b0b6c0; font-weight:400; font-style:italic;}
+  .no-result{text-align:center; color:var(--muted); padding:30px 0;}
+  footer{text-align:center; color:var(--muted); font-size:.8rem; margin-top:30px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔍 Employee Asset Search</h1>
+  <p class="sub">Search by employee name — source: <b>New Master</b> sheet</p>
+
+  <div id="suggestions">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Type an employee name..." autocomplete="off">
+      <button onclick="doSearch()">Search</button>
+    </div>
+    <div id="suggList"></div>
+  </div>
+
+  <div id="results"></div>
+
+  <footer><span id="totalCount"></span></footer>
+</div>
+
+<script>
+const employees = [{"name": "Sachin Shinde", "empid": "BLG250003", "producttype": "Laptop", "systemmodel": "Vostro 15 3510", "monitortag": "Dell - D90RPF4", "headphone": "YES", "mouse": "BL/MS/003"}, {"name": "Ganesh Pacharne", "empid": "BLG250004", "producttype": "Desktop", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Abhijeet Shelke", "empid": "BLG250005", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Sagar Bhoknal", "empid": "BLG250006", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Sachin Shelar", "empid": "BLG250007", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shubham Kalbhor", "empid": "BLG250008", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Deepak Bhorade", "empid": "BLG250009", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Surekha Kamble", "empid": "BLG250010", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Vidya Waghmare", "empid": "BLG250011", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Vrushabh Patil", "empid": "BLG250012", "producttype": "Laptop", "systemmodel": "Precision 7760", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Rahul Singh", "empid": "BLG250013", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shivani Chavan", "empid": "BLG250014", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Devika Deshmukh", "empid": "BLG250015", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shubham Bhosale", "empid": "BLG250016", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Abhijeet Dagade", "empid": "BLG250017", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Sayali Shelke", "empid": "BLG250018", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shubham Shelar", "empid": "BLG250019", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Yogesh Rajpure", "empid": "BLG250020", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Aditya Deshmukh", "empid": "BLG250021", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Umesh Khade", "empid": "BLG250022", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Sushant Jadhav", "empid": "BLG250023", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Jyoti Pawar", "empid": "BLG250024", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Anisha Suryavanshi", "empid": "BLG250025", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Monika Morde", "empid": "BLG250026", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Rohit Bamane", "empid": "BLG250027", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shivani Salunke", "empid": "BLG250028", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shankar Thombare", "empid": "BLG250029", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Vrushabh Jyotik", "empid": "BLI250032", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Manoj Amrutkar", "empid": "BLJ250033", "producttype": "Laptop", "systemmodel": "Precision 7760", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Kishan Rane", "empid": "BLJ250034", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Vishal kanakdande", "empid": "BLK250035", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Nikhil Patil", "empid": "BLK250036", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shreya Varkhade", "empid": "BLK250037", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Kaustubh Kshirsagar", "empid": "BLK250038", "producttype": "Desktop", "systemmodel": "", "monitortag": "Dell - 690RPF4", "headphone": "YES", "mouse": ""}, {"name": "Sachin pawar", "empid": "BLL250039", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Hrishikesh Kale", "empid": "BLL250040", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shivani chaudhari", "empid": "BLL250041", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shubham Patil", "empid": "BLA260042", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "PRAJAKTA PATOLE", "empid": "BLB260043", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "SUMIT GAWLI", "empid": "BLB260044", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "RAHUL", "empid": "", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "SAGAR", "empid": "", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}];
+
+document.getElementById('totalCount').textContent = employees.length + ' employee records loaded from New Master sheet';
+
+const input = document.getElementById('searchInput');
+const suggList = document.getElementById('suggList');
+const results = document.getElementById('results');
+
+function norm(s){ return (s||'').toLowerCase().trim(); }
+
+function renderSuggestions(query){
+  suggList.innerHTML = '';
+  if(!query){ return; }
+  const q = norm(query);
+  const matches = employees.filter(e => norm(e.name).includes(q)).slice(0, 8);
+  if(matches.length === 0) return;
+  const box = document.createElement('div');
+  box.className = 'sugg-list';
+  matches.forEach(m => {
+    const div = document.createElement('div');
+    div.className = 'sugg-item';
+    div.innerHTML = highlightMatch(m.name, query) + ' <span style="color:#9aa1ad;">(' + m.empid + ')</span>';
+    div.onclick = () => {
+      input.value = m.name;
+      suggList.innerHTML = '';
+      showResultsFor(m.name);
+    };
+    box.appendChild(div);
+  });
+  suggList.appendChild(box);
+}
+
+function highlightMatch(name, query){
+  const idx = norm(name).indexOf(norm(query));
+  if(idx === -1) return name;
+  return name.slice(0, idx) + '<b>' + name.slice(idx, idx+query.length) + '</b>' + name.slice(idx+query.length);
+}
+
+function fieldHtml(label, val){
+  const isEmpty = !val;
+  return '<div class="item"><div class="label">'+label+'</div><div class="value'+(isEmpty?' empty':'')+'">'+(val || 'Not assigned')+'</div></div>';
+}
+
+function renderCard(e){
+  return '<div class="card">' +
+    '<h2>'+e.name+'</h2>' +
+    '<div class="emp-id">Employee ID: '+e.empid+'</div>' +
+    '<div class="grid">' +
+      fieldHtml('Product Type', e.producttype) +
+      fieldHtml('System Model', e.systemmodel) +
+      fieldHtml('Monitor Service Tag', e.monitortag) +
+      fieldHtml('Headphone', e.headphone) +
+      fieldHtml('Mouse Tag', e.mouse) +
+    '</div>' +
+  '</div>';
+}
+
+function showResultsFor(query){
+  const q = norm(query);
+  if(!q){ results.innerHTML=''; return; }
+  const matches = employees.filter(e => norm(e.name).includes(q));
+  if(matches.length === 0){
+    results.innerHTML = '<div class="no-result">No employee found matching "'+query+'"</div>';
+    return;
+  }
+  results.innerHTML = matches.map(renderCard).join('');
+}
+
+input.addEventListener('input', () => renderSuggestions(input.value));
+input.addEventListener('keydown', (ev) => {
+  if(ev.key === 'Enter'){ suggList.innerHTML = ''; doSearch(); }
+});
+document.addEventListener('click', (ev) => {
+  if(!document.getElementById('suggestions').contains(ev.target)){ suggList.innerHTML = ''; }
+});
+
+function doSearch(){ showResultsFor(input.value); }
+</script>
+</body>
+</html>
