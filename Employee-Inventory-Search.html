@@ -120,13 +120,14 @@ function loadData(){
         throw new Error('Sheet appears empty');
       }
       employees = rows.slice(1).filter(r => r[0] && r[0].trim()).map(r => ({
-        name: (r[0]||'').trim(),
+        name: (r[2]||'').trim(),
         empid: (r[1]||'').trim(),
-        producttype: (r[2]||'').trim(),
-        systemmodel: (r[3]||'').trim(),
-        monitortag: (r[4]||'').trim(),
-        headphone: (r[5]||'').trim(),
-        mouse: (r[6]||'').trim()
+        producttype: (r[5]||'').trim(),
+        systemmodel: (r[6]||'').trim(),
+        monitortag: (r[13]||'').trim(),
+        headphone: (r[17]||'').trim(),
+        mouse: (r[18]||'').trim()
+
       }));
       setStatus('✓ ' + employees.length + ' employee records loaded', 'ok');
       document.getElementById('footerNote').textContent = 'Last refreshed ' + new Date().toLocaleString();
