@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Employee Asset Search</title>
+<title>Employee Asset Search — New Master</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   :root{
     --bg:#f4f6f9; --card:#ffffff; --accent:#2f5fdc; --accent-dark:#20418f;
@@ -15,7 +16,15 @@
   }
   .wrap{max-width:760px; margin:0 auto;}
   h1{font-size:1.6rem; text-align:center; margin-bottom:4px;}
-  p.sub{text-align:center; color:var(--muted); margin-top:0; margin-bottom:24px; font-size:.95rem;}
+  p.sub{text-align:center; color:var(--muted); margin-top:0; margin-bottom:20px; font-size:.95rem;}
+
+  .status-bar{
+    text-align:center; font-size:.82rem; margin-bottom:20px; min-height:18px;
+  }
+  .status-bar.ok{color:#1a8a4a;}
+  .status-bar.err{color:#c0392b;}
+  .status-bar.loading{color:var(--muted);}
+
   .search-box{
     display:flex; gap:8px; background:var(--card); padding:8px; border-radius:12px;
     box-shadow:0 2px 10px rgba(20,30,60,0.07); border:1px solid var(--border);
@@ -56,9 +65,10 @@
 </head>
 <body>
 <div class="wrap">
-  <h1> Bright Lumitech PVT. LTD.</h1>
   <h1>🔍 Employee Asset Search</h1>
-  <p class="sub">Search by employee name</p>
+  <p class="sub">Search by employee name — live data from the <b>New Master</b> Google Sheet</p>
+
+  <div id="statusBar" class="status-bar loading">Loading data...</div>
 
   <div id="suggestions">
     <div class="search-box">
@@ -70,23 +80,72 @@
 
   <div id="results"></div>
 
-  <footer><span id="totalCount"></span></footer>
+  <footer id="footerNote"></footer>
 </div>
 
 <script>
-const employees = [{"name": "Sachin Shinde", "empid": "BLG250003", "producttype": "Laptop", "systemmodel": "Vostro 15 3510", "monitortag": "Dell - D90RPF4", "headphone": "YES", "mouse": "BL/MS/003"}, {"name": "Ganesh Pacharne", "empid": "BLG250004", "producttype": "Desktop", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Abhijeet Shelke", "empid": "BLG250005", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Sagar Bhoknal", "empid": "BLG250006", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Sachin Shelar", "empid": "BLG250007", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shubham Kalbhor", "empid": "BLG250008", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Deepak Bhorade", "empid": "BLG250009", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Surekha Kamble", "empid": "BLG250010", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Vidya Waghmare", "empid": "BLG250011", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Vrushabh Patil", "empid": "BLG250012", "producttype": "Laptop", "systemmodel": "Precision 7760", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Rahul Singh", "empid": "BLG250013", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shivani Chavan", "empid": "BLG250014", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Devika Deshmukh", "empid": "BLG250015", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shubham Bhosale", "empid": "BLG250016", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Abhijeet Dagade", "empid": "BLG250017", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Sayali Shelke", "empid": "BLG250018", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shubham Shelar", "empid": "BLG250019", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Yogesh Rajpure", "empid": "BLG250020", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Aditya Deshmukh", "empid": "BLG250021", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Umesh Khade", "empid": "BLG250022", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Sushant Jadhav", "empid": "BLG250023", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Jyoti Pawar", "empid": "BLG250024", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Anisha Suryavanshi", "empid": "BLG250025", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Monika Morde", "empid": "BLG250026", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Rohit Bamane", "empid": "BLG250027", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shivani Salunke", "empid": "BLG250028", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shankar Thombare", "empid": "BLG250029", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Vrushabh Jyotik", "empid": "BLI250032", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Manoj Amrutkar", "empid": "BLJ250033", "producttype": "Laptop", "systemmodel": "Precision 7760", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Kishan Rane", "empid": "BLJ250034", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Vishal kanakdande", "empid": "BLK250035", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Nikhil Patil", "empid": "BLK250036", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shreya Varkhade", "empid": "BLK250037", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Kaustubh Kshirsagar", "empid": "BLK250038", "producttype": "Desktop", "systemmodel": "", "monitortag": "Dell - 690RPF4", "headphone": "YES", "mouse": ""}, {"name": "Sachin pawar", "empid": "BLL250039", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Hrishikesh Kale", "empid": "BLL250040", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shivani chaudhari", "empid": "BLL250041", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "Shubham Patil", "empid": "BLA260042", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "PRAJAKTA PATOLE", "empid": "BLB260043", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "SUMIT GAWLI", "empid": "BLB260044", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "RAHUL", "empid": "", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}, {"name": "SAGAR", "empid": "", "producttype": "", "systemmodel": "", "monitortag": "", "headphone": "", "mouse": ""}];
+// ===== CONFIG: paste your published Google Sheet CSV link between the quotes below =====
+const SHEET_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQPLLCWQ1y88q6V5YzDxCHQPddaXU6FJSCvvXb1go39HLs4rxG2bjwNlGIBpOU_Tjf4gISwFsBniKjG/pub?gid=363316675&output=csv";
+// Example: const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-xxxxx/pub?output=csv";
+// ==========================================================================================
 
-document.getElementById('totalCount').textContent = employees.length + ' employee records loaded from New Master sheet';
+let employees = [];
+
+function norm(s){ return (s||'').toLowerCase().trim(); }
+
+function setStatus(msg, cls){
+  const el = document.getElementById('statusBar');
+  el.textContent = msg;
+  el.className = 'status-bar ' + (cls || '');
+}
+
+function loadData(){
+  if(!SHEET_CSV_URL){
+    setStatus('⚠ No Google Sheet link configured. Edit SHEET_CSV_URL in the code.', 'err');
+    return;
+  }
+  setStatus('Loading data from Google Sheet...', 'loading');
+
+  const bust = (SHEET_CSV_URL.includes('?') ? '&' : '?') + '_ts=' + Date.now();
+
+  fetch(SHEET_CSV_URL + bust)
+    .then(res => {
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      return res.text();
+    })
+    .then(csvText => {
+      const parsed = Papa.parse(csvText.trim(), { skipEmptyLines: true });
+      const rows = parsed.data;
+      if(rows.length < 2){
+        throw new Error('Sheet appears empty');
+      }
+      employees = rows.slice(1).filter(r => r[0] && r[0].trim()).map(r => ({
+        name: (r[0]||'').trim(),
+        empid: (r[1]||'').trim(),
+        producttype: (r[2]||'').trim(),
+        systemmodel: (r[3]||'').trim(),
+        monitortag: (r[4]||'').trim(),
+        headphone: (r[5]||'').trim(),
+        mouse: (r[6]||'').trim()
+      }));
+      setStatus('✓ ' + employees.length + ' employee records loaded', 'ok');
+      document.getElementById('footerNote').textContent = 'Last refreshed ' + new Date().toLocaleString();
+      if(document.getElementById('searchInput').value.trim()){
+        showResultsFor(document.getElementById('searchInput').value);
+      }
+    })
+    .catch(err => {
+      setStatus('✗ Could not load sheet: ' + err.message, 'err');
+    });
+}
 
 const input = document.getElementById('searchInput');
 const suggList = document.getElementById('suggList');
 const results = document.getElementById('results');
 
-function norm(s){ return (s||'').toLowerCase().trim(); }
-
 function renderSuggestions(query){
   suggList.innerHTML = '';
-  if(!query){ return; }
+  if(!query || employees.length === 0){ return; }
   const q = norm(query);
   const matches = employees.filter(e => norm(e.name).includes(q)).slice(0, 8);
   if(matches.length === 0) return;
@@ -134,6 +193,10 @@ function renderCard(e){
 function showResultsFor(query){
   const q = norm(query);
   if(!q){ results.innerHTML=''; return; }
+  if(employees.length === 0){
+    results.innerHTML = '<div class="no-result">Data not loaded yet.</div>';
+    return;
+  }
   const matches = employees.filter(e => norm(e.name).includes(q));
   if(matches.length === 0){
     results.innerHTML = '<div class="no-result">No employee found matching "'+query+'"</div>';
@@ -151,6 +214,9 @@ document.addEventListener('click', (ev) => {
 });
 
 function doSearch(){ showResultsFor(input.value); }
+
+// Auto-load in the background as soon as the page opens
+loadData();
 </script>
 </body>
 </html>
