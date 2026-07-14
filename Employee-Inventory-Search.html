@@ -119,7 +119,7 @@ function loadData(){
       if(rows.length < 2){
         throw new Error('Sheet appears empty');
       }
-      employees = rows.slice(1).filter(r => r[0] && r[0].trim()).map(r => ({
+      employees = rows.slice(1).filter(r => r[2] && r[2].trim()).map(r => ({
         name: (r[2]||'').trim(),
         empid: (r[1]||'').trim(),
         producttype: (r[5]||'').trim(),
